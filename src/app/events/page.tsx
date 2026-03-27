@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 import { fetchFromAPI } from "@/lib/api";
 import { Event } from "@/types/event";
 
 export default function EventsPage() {
+  const { user, token } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [applyingId, setApplyingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchFromAPI<Event[]>("/api/v1/events")
@@ -15,6 +18,23 @@ export default function EventsPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleApply = async (eventId: number) => {
+    if (!token) return;
+
+    setApplyingId(eventId);
+    try {
+      await fetchFromAPI(`/api/v1/events/${eventId}/event_applications`, {
+        method: "POST",
+        headers: { Authorization: token },
+      });
+      alert("イベントに参加しました");
+    } catch {
+      alert("参加に失敗しました");
+    } finally {
+      setApplyingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -50,6 +70,15 @@ export default function EventsPage() {
                 <p>📅 {new Date(event.starts_at).toLocaleString("ja-JP")}</p>
                 <p>📍 {event.location}</p>
               </div>
+              {user && (
+                <button
+                  onClick={() => handleApply(event.id)}
+                  disabled={applyingId === event.id}
+                  className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:bg-gray-400"
+                >
+                  {applyingId === event.id ? "処理中..." : "イベントに参加する"}
+                </button>
+              )}
             </li>
           ))}
         </ul>
