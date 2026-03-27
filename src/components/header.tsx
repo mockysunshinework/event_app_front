@@ -27,6 +27,9 @@ export function Header() {
             </Link>
             {user ? (
               <>
+                <Link href="/mypage/applications" className="hover:underline">
+                  申し込み一覧
+                </Link>
                 <span className="text-gray-600">{user.name}</span>
                 <button
                   onClick={handleLogout}
